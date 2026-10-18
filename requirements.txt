@@ -1,0 +1,17 @@
+duckdb
+pandas
+pyarrow
+pydantic>=2.0.0
+requests
+httpx
+rapidfuzz
+networkx
+igraph
+numpy
+scipy
+statsmodels
+patsy
+scikit-learn
+streamlit
+matplotlib
+pytest
