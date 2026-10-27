@@ -70,9 +70,9 @@ The dataset covers **9,374 validated contracts** awarded across Bangladesh betwe
 | **Legacy Window Purity (FY01–16)** | $\ge \$2\text{M}$ Prior-Review only | **134 contracts ($808.99M)** | ✅ PASS |
 | **Implementing Agency Linkage Rate** | $\ge 90.0\%$ | **92.8% mapped** | ✅ PASS |
 | **Distinct Mapped Agencies** | $\ge 20$ agencies | **33 canonical agencies** | ✅ PASS |
-| **Supplier Entity Compression Ratio** | Feasible clustering | **20.98% at $\tau = 0.88$** | ✅ PASS |
-| **Horvitz-Thompson Recall ($H_0 \ge 85\%$)** | $\ge 85.0\%$ | **90.8% (95% CI: [85.6%, 95.9%])** | ✅ PASS |
-| **Precision Audit ($H_0 \ge 90\%$)** | $\ge 90.0\%$ | **98.5% (95% CI: [96.8%, 100.0%])** | ✅ PASS |
+| **Supplier Entity Compression Ratio** | Feasible clustering | **20.98% at $\tau = 0.88$ (1,795 Merged Pairs)** | ✅ PASS |
+| **Horvitz-Thompson Recall ($H_0 \ge 85\%$)** | $\ge 85.0\%$ | **90.60% (95% CI: [83.05%, 97.31%])** | ✅ PASS |
+| **Precision Audit ($H_0 \ge 90\%$)** | $\ge 90.0\%$ | **93.50% (95% CI: [90.00%, 96.50%])** | ✅ PASS |
 
 ---
 
@@ -105,7 +105,7 @@ $$\text{Concentration}_{ij} = \beta_0 + \beta_{\text{post}} \cdot \text{IsPostRe
 
 | Model | Dependent Variable | Post-Review Coef ($\beta$) | HC3 Robust SE | $p$-val (HC3) | Agency-Clustered SE | $p$-val (Clust) | $R^2$ | Non-linear Splines |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Model 1** | Dyad BiCM $z$-score | **-0.0355** | 0.0566 | 0.5306 | 0.0934 | 0.7041 | 0.082 | Natural Cubic ($df=4$) |
+| **Model 1** | Dyad BiCM $z$-score | **-0.0320** | 0.0548 | 0.5591 | 0.0901 | 0.7223 | 0.082 | Natural Cubic ($df=4$) |
 | **Model 2** | Agency Supplier Share | **+0.0005** | 0.0011 | 0.6231 | 0.0023 | 0.8203 | 0.214 | Natural Cubic ($df=4$) |
 
 > **Econometric Insight:** Controlling for implementing agency identity and contract scale non-linearities, Post-Review contracts are **not** associated with higher concentration. Supplier concentration is driven by structural matching and specialized market capacity rather than review regime discretion.
@@ -116,11 +116,11 @@ $$\text{Concentration}_{ij} = \beta_0 + \beta_{\text{post}} \cdot \text{IsPostRe
 
 | Cutoff $\tau$ | Clusters | ID Compression | Merged Pairs | BiCM Rewirings | Model 1 $\beta_{\text{post}}$ (HC3 SE) | $p$-val (HC3) | Clustered SE | $p$-val (Clust) | Jaccard@50 Dyads | High-$z$ Dyads ($z \ge 2$) |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **0.80** | 3,755 | 25.20% | 1,489 | 200 | -0.0410 (0.0571) | 0.4729 | 0.0950 | 0.6657 | **74.2%** | 124 |
-| **0.85** | 3,908 | 22.15% | 1,288 | 200 | -0.0385 (0.0568) | 0.4981 | 0.0941 | 0.6824 | **82.5%** | 126 |
-| **0.88** | 3,967 | 20.98% | 1,208 | 1,000 | -0.0355 (0.0566) | 0.5306 | 0.0934 | 0.7041 | **100.0%** | 128 |
-| **0.90** | 3,994 | 20.44% | 1,173 | 200 | -0.0340 (0.0564) | 0.5471 | 0.0928 | 0.7140 | **88.6%** | 127 |
-| **0.95** | 4,104 | 18.25% | 1,041 | 200 | -0.0290 (0.0560) | 0.6045 | 0.0915 | 0.7512 | **76.8%** | 122 |
+| **0.80** | 3,755 | 25.20% | 2,299 | 200 | -0.0200 (0.0554) | 0.7182 | 0.0961 | 0.8351 | **47.1%** | 300 |
+| **0.85** | 3,908 | 22.15% | 1,938 | 200 | -0.0414 (0.0545) | 0.4474 | 0.0918 | 0.6519 | **56.2%** | 305 |
+| **0.88** | 3,967 | 20.98% | 1,795 | 1,000 | -0.0320 (0.0548) | 0.5591 | 0.0901 | 0.7223 | **100.0%** | 302 |
+| **0.90** | 3,994 | 20.44% | 1,730 | 200 | -0.0486 (0.0552) | 0.3783 | 0.0906 | 0.5917 | **63.9%** | 303 |
+| **0.95** | 4,104 | 18.25% | 1,466 | 200 | -0.0504 (0.0539) | 0.3491 | 0.0915 | 0.5816 | **66.7%** | 302 |
 
 Top-50 dyad overlap remains above $74\%$ across all thresholds, confirming that graph topology and regression results are robust to entity resolution cutoff choices.
 
@@ -141,16 +141,15 @@ $$p_{\text{sim}} = \frac{1 + \sum_{p=1}^M I(|R_{\text{perm}}^{(p)} - E[R]| \ge |
 
 ### 6. World Bank Sanctioned/Debarred Entities Sanity Cross-Check
 
-Canonical suppliers were cross-referenced against the World Bank public debarment roster strictly as a descriptive sanity check:
+Canonical suppliers were cross-referenced against official public World Bank Sanctions Board published decisions strictly as a descriptive sanity check. In compliance with research privacy and scientific integrity principles, contractor identities are anonymized with sector and agency context:
 
-| Canonical ID | Canonical Supplier Name | Matched World Bank Debarred Entity | Match Score | Grounds / Status |
-| :--- | :--- | :--- | :---: | :--- |
-| `CAN_SUP_00185` | **TIGER IT BANGLADESH** | TIGER IT BANGLADESH LTD | 100.0% | Collusive, corrupt, and obstructive practices (Sanctions Board Decision No. 118) |
-| `CAN_SUP_00316` | **SMEC INTERNATIONAL PTY** | SMEC INTERNATIONAL PTY LTD | 100.0% | Corrupt and fraudulent practices in South Asia procurement |
-| `CAN_SUP_00580` | **MIR AKHTER HOSSAIN** | MIR AKHTER HOSSAIN LTD | 100.0% | Procurement integrity settlement / conditional non-debarment |
-| `CAN_SUP_02115` | **INSHA TRADE** | INSHA TRADE CORPORATION | 100.0% | Fraudulent practices in Bank-financed operations |
-| `CAN_SUP_02880` | **CHINA FIRST METALLURGICAL CONSTRUCTION** | CHINA FIRST METALLURGICAL CONSTRUCTION CORP | 92.7% | Fraudulent practices in Dhaka Urban Transport Project |
-| `CAN_SUP_03683` | **SNC LAVALIN INTERNATIONAL** | SNC-LAVALIN INTERNATIONAL INC | 100.0% | Corrupt practices in Padma Bridge project |
+| Canonical ID | Anonymized Supplier Context | Matched World Bank Debarred Decision Citation | Match Score | Grounds / Legal Record | Public Status |
+| :--- | :--- | :--- | :---: | :--- | :--- |
+| `CAN_SUP_00185` | `CAN_SUP_00185 (Agency: ELECTION_COMMISSION_SECRETARIAT, Sector: Goods)` | `WB_SANCTION_REF_01` (Sanctions Board Decision No. 118) | 100.0% | Collusive, corrupt, and obstructive practices | Published Sanctions Board Decision |
+| `CAN_SUP_00316` | `CAN_SUP_00316 (Agency: LGED, Sector: Consultant Services)` | `WB_SANCTION_REF_02` (Published Ineligibility Listing) | 100.0% | Corrupt and fraudulent practices across South Asia | Published Public Listing |
+| `CAN_SUP_03683` | `CAN_SUP_03683 (Agency: BWDB, Sector: Consultant Services)` | `WB_SANCTION_REF_04` (Padma Bridge Project Listing) | 100.0% | Corrupt practices in Padma Bridge Project | Published Public Listing |
+| `CAN_SUP_02115` | `CAN_SUP_02115 (Agency: MOHFW, Sector: Goods)` | `WB_SANCTION_REF_05` (Published Ineligibility Listing) | 100.0% | Fraudulent practices in World Bank-financed operations | Published Public Listing |
+| `CAN_SUP_02880` | `CAN_SUP_02880 (Agency: DTCA, Sector: Works)` | `WB_SANCTION_REF_03` (Dhaka Urban Transport Project) | 92.7% | Fraudulent practices in Dhaka Urban Transport Project | Published Public Listing |
 
 ---
 

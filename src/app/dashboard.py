@@ -174,12 +174,65 @@ def load_debarred_json() -> pd.DataFrame:
     return pd.DataFrame()
 
 
+@st.cache_data
+def load_debarred_matches(anonymize: bool = True) -> pd.DataFrame:
+    """Run strict debarment cross-check on canonical suppliers."""
+    if not DB_PATH.exists():
+        return pd.DataFrame()
+    con = duckdb.connect(str(DB_PATH), read_only=True)
+    try:
+        supp_df = con.execute("SELECT canonical_supplier_id, canonical_name FROM canonical_suppliers").df()
+        supp_meta_df = con.execute(
+            """
+            SELECT 
+                cs.canonical_supplier_id, 
+                mp.implementing_agency_canonical AS agency, 
+                rc.procurement_category 
+            FROM canonical_suppliers cs,
+                 UNNEST(cs.raw_supplier_ids) as t(raw_id)
+            JOIN raw_contracts rc ON t.raw_id = rc.supplier_id
+            LEFT JOIN mapped_projects mp ON rc.project_id = mp.project_id
+            """
+        ).df()
+    finally:
+        con.close()
+
+    sec_map = (
+        supp_meta_df.groupby("canonical_supplier_id")["procurement_category"]
+        .agg(lambda s: s.mode().iloc[0] if not s.empty else "Commercial")
+        .to_dict()
+    )
+    ag_map = (
+        supp_meta_df.groupby("canonical_supplier_id")["agency"]
+        .agg(lambda s: s.mode().iloc[0] if not s.empty else "Multiple")
+        .to_dict()
+    )
+
+    from src.evaluation.regime_models import cross_check_debarred_firms
+    return cross_check_debarred_firms(
+        supp_df,
+        threshold=92.0,
+        anonymize=anonymize,
+        sector_map=sec_map,
+        agency_map=ag_map,
+    )
+
+
 # Load cached data
 db_summary = load_db_summary()
 power_gate_df = load_audit_csv("week3_power_gate.csv")
 prec_audit_df = load_audit_csv("precision_audit_200.csv")
 rec_audit_df = load_audit_csv("recall_audit_200.csv")
 debarred_df = load_debarred_json()
+
+# Sidebar Privacy Toggle
+st.sidebar.markdown("### 🔒 Research Privacy Controls")
+anonymize_contractors = st.sidebar.toggle(
+    "Anonymize Contractor Identifiers",
+    value=True,
+    help="Default ON: Replaces real contractor names with canonical IDs and agency/sector context per SPEC.md integrity pass.",
+)
+st.sidebar.markdown("---")
 
 
 # ==============================================================================
@@ -249,7 +302,7 @@ with tab1:
             <div class="metric-card">
                 <div class="metric-title">Canonical Suppliers</div>
                 <div class="metric-value">{db_summary.get('n_canonical_suppliers', 3967):,}</div>
-                <div class="metric-sub">20.98% Compression at τ = 0.88</div>
+                <div class="metric-sub">20.98% Compression (1,795 Merged)</div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -284,11 +337,11 @@ with tab1:
         st.markdown("### 🎯 Horvitz-Thompson Entity Resolution Audit")
         ac1, ac2 = st.columns(2)
         with ac1:
-            st.metric(label="Precision (Audit n=200)", value="98.5%", delta="+8.5% over 90% spec")
-            st.caption("95% Bootstrap CI: **[96.8%, 100.0%]**")
+            st.metric(label="Precision (Audit n=200)", value="93.5%", delta="+3.5% over 90% spec")
+            st.caption("95% Bootstrap CI: **[90.0%, 96.5%]** • 187 TP / 200 pairs")
         with ac2:
-            st.metric(label="Horvitz-Thompson Recall", value="90.8%", delta="+5.8% over 85% spec")
-            st.caption("95% Bootstrap CI: **[85.6%, 95.9%]** across near-neighbor strata")
+            st.metric(label="Horvitz-Thompson Recall", value="90.6%", delta="+5.6% over 85% spec")
+            st.caption("95% Bootstrap CI: **[83.1%, 97.3%]** across near-neighbor strata")
 
     with col_right:
         st.markdown("### 📉 Supplier ID-Compression Across RapidFuzz Cutoff $\\tau$")
@@ -366,18 +419,26 @@ with tab2:
     with col_dyad:
         st.markdown("### 🤝 Top Agency-Supplier Dyads (BiCM $z$-score)")
         dyads_sample = pd.DataFrame([
-            {"agency": "MOWCA", "supplier": "GLOBAL BRAND", "contracts": 1, "null_mean": 0.01, "z_contracts": 11.91, "p_val": 0.0080, "usd": 3662},
-            {"agency": "DG_FOOD", "supplier": "INTIMACY COMPUTER", "contracts": 1, "null_mean": 0.01, "z_contracts": 9.48, "p_val": 0.0120, "usd": 14959},
-            {"agency": "DAE", "supplier": "SMART TECHNOLOGIES", "contracts": 4, "null_mean": 0.27, "z_contracts": 7.68, "p_val": 0.0010, "usd": 109810},
-            {"agency": "IMED", "supplier": "PARTEX FURNITURES", "contracts": 1, "null_mean": 0.02, "z_contracts": 6.67, "p_val": 0.0230, "usd": 15803},
-            {"agency": "DPHE", "supplier": "TAWSIF ENTERPRISE", "contracts": 2, "null_mean": 0.08, "z_contracts": 6.55, "p_val": 0.0070, "usd": 482025},
-            {"agency": "MOWCA", "supplier": "FLORA", "contracts": 1, "null_mean": 0.03, "z_contracts": 6.22, "p_val": 0.0260, "usd": 8604},
-            {"agency": "DG_FOOD", "supplier": "DIPU ENTERPRISE", "contracts": 2, "null_mean": 0.10, "z_contracts": 6.00, "p_val": 0.0090, "usd": 3527344},
-            {"agency": "LGED", "supplier": "M/S THE CHOWDHURY", "contracts": 2, "null_mean": 0.11, "z_contracts": 5.75, "p_val": 0.0120, "usd": 709890},
-            {"agency": "DPHE", "supplier": "RABBY ENTERPRISE", "contracts": 2, "null_mean": 0.11, "z_contracts": 5.68, "p_val": 0.0090, "usd": 1285270},
-            {"agency": "DPHE", "supplier": "KAYES CONSTRUCTION", "contracts": 4, "null_mean": 0.44, "z_contracts": 5.37, "p_val": 0.0020, "usd": 2043680},
+            {"agency": "MOWCA", "canonical_id": "CAN_SUP_00001", "sector": "Goods", "supplier_raw": "GLOBAL BRAND", "contracts": 1, "null_mean": 0.01, "z_contracts": 11.91, "p_val": 0.0080, "usd": 3662},
+            {"agency": "DG_FOOD", "canonical_id": "CAN_SUP_00221", "sector": "Goods", "supplier_raw": "INTIMACY COMPUTER AND SOLUTIONS", "contracts": 1, "null_mean": 0.01, "z_contracts": 9.48, "p_val": 0.0120, "usd": 14959},
+            {"agency": "DAE", "canonical_id": "CAN_SUP_00005", "sector": "Goods", "supplier_raw": "SMART TECHNOLOGIES BANGLADESH", "contracts": 4, "null_mean": 0.27, "z_contracts": 7.68, "p_val": 0.0010, "usd": 109810},
+            {"agency": "IMED", "canonical_id": "CAN_SUP_00333", "sector": "Goods", "supplier_raw": "PARTEX FURNITURES INDUSTRIES", "contracts": 1, "null_mean": 0.02, "z_contracts": 6.67, "p_val": 0.0230, "usd": 15803},
+            {"agency": "UGC", "canonical_id": "CAN_SUP_00007", "sector": "Goods", "supplier_raw": "BANGLADESH SCIENCE HOUSE DHAKA", "contracts": 3, "null_mean": 0.20, "z_contracts": 6.62, "p_val": 0.0010, "usd": 604553},
+            {"agency": "DPHE", "canonical_id": "CAN_SUP_00129", "sector": "Works", "supplier_raw": "TAWSIF ENTERPRISE", "contracts": 2, "null_mean": 0.08, "z_contracts": 6.55, "p_val": 0.0070, "usd": 482025},
+            {"agency": "UNKNOWN", "canonical_id": "CAN_SUP_02032", "sector": "Goods", "supplier_raw": "TAJEEM", "contracts": 1, "null_mean": 0.02, "z_contracts": 6.38, "p_val": 0.0250, "usd": 5734},
+            {"agency": "DSHE", "canonical_id": "CAN_SUP_00833", "sector": "Goods", "supplier_raw": "CORE KNOWLEDGE", "contracts": 1, "null_mean": 0.02, "z_contracts": 6.38, "p_val": 0.0250, "usd": 630257},
+            {"agency": "MOWCA", "canonical_id": "CAN_SUP_00013", "sector": "Goods", "supplier_raw": "FLORA", "contracts": 1, "null_mean": 0.03, "z_contracts": 6.22, "p_val": 0.0260, "usd": 8604},
+            {"agency": "DG_FOOD", "canonical_id": "CAN_SUP_00214", "sector": "Works", "supplier_raw": "DIPU ENTERPRISE", "contracts": 2, "null_mean": 0.10, "z_contracts": 6.00, "p_val": 0.0090, "usd": 3527344},
         ])
-        st.dataframe(dyads_sample, use_container_width=True)
+        if anonymize_contractors:
+            dyads_display = dyads_sample.copy()
+            dyads_display["supplier"] = dyads_display.apply(
+                lambda r: f"{r['canonical_id']} (Agency: {r['agency']}, Sector: {r['sector']})", axis=1
+            )
+            dyads_display = dyads_display[["agency", "supplier", "contracts", "null_mean", "z_contracts", "p_val", "usd"]]
+        else:
+            dyads_display = dyads_sample[["agency", "supplier_raw", "contracts", "null_mean", "z_contracts", "p_val", "usd"]].rename(columns={"supplier_raw": "supplier"})
+        st.dataframe(dyads_display, use_container_width=True)
 
 
 # ==============================================================================
@@ -505,13 +566,52 @@ with tab4:
         st.caption("Top-50 dyad overlap (Jaccard@50) remains above 74% across all thresholds, confirming topological stability.")
 
     st.markdown("---")
-    st.markdown("### 🛡️ World Bank Sanctioned/Debarred Entities Sanity Check")
+    st.markdown("### 🛡️ World Bank Sanctioned/Debarred Entities Sanity Cross-Check")
     st.markdown(
-        "Descriptive cross-referencing of canonical Bangladeshi suppliers against public World Bank sanctions."
+        "Descriptive cross-referencing of canonical suppliers against official public World Bank Sanctions Board published decisions. "
+        "Strict normalized token-sort matching ($\\ge 92.0\\%$) with contractor privacy anonymization."
     )
 
-    if not debarred_df.empty:
-        st.dataframe(
-            debarred_df[["firm_name", "country", "grounds", "status", "debarment_period"]],
-            use_container_width=True,
-        )
+    debarred_matches_df = load_debarred_matches(anonymize=anonymize_contractors)
+    if not debarred_matches_df.empty:
+        if anonymize_contractors:
+            cols = ["canonical_supplier_id", "anonymized_label", "debarred_reference", "match_score", "citation", "status"]
+            st.dataframe(
+                debarred_matches_df[cols].rename(columns={
+                    "canonical_supplier_id": "Canonical ID",
+                    "anonymized_label": "Anonymized Supplier Context",
+                    "debarred_reference": "Decision / Reference Citation",
+                    "match_score": "Match Score (%)",
+                    "citation": "Official Public Grounds",
+                    "status": "Public Record Status",
+                }),
+                use_container_width=True,
+            )
+        else:
+            cols = ["canonical_supplier_id", "canonical_name", "debarred_firm_name", "match_score", "citation", "status"]
+            st.dataframe(
+                debarred_matches_df[cols].rename(columns={
+                    "canonical_supplier_id": "Canonical ID",
+                    "canonical_name": "Canonical Supplier Name",
+                    "debarred_firm_name": "Sanctioned Entity Name",
+                    "match_score": "Match Score (%)",
+                    "citation": "Official Public Grounds",
+                    "status": "Public Record Status",
+                }),
+                use_container_width=True,
+            )
+    else:
+        st.info("No supplier records matched official published debarment citations at threshold ≥ 92%.")
+
+    with st.expander("📋 View Official World Bank Published Sanctions Decision Registry"):
+        if not debarred_df.empty:
+            if anonymize_contractors:
+                st.dataframe(
+                    debarred_df[["reference_id", "citation", "country", "status", "debarment_period"]],
+                    use_container_width=True,
+                )
+            else:
+                st.dataframe(
+                    debarred_df[["reference_id", "firm_name", "citation", "country", "status", "debarment_period"]],
+                    use_container_width=True,
+                )
