@@ -250,18 +250,24 @@ def estimate_all_regime_models(
 def cross_check_debarred_firms(
     canonical_suppliers_df: pd.DataFrame,
     debarred_source: list[dict[str, Any]] | Path | str | None = None,
-    threshold: float = 85.0,
+    threshold: float = 92.0,
+    anonymize: bool = False,
+    sector_map: dict[str, str] | None = None,
+    agency_map: dict[str, str] | None = None,
 ) -> pd.DataFrame:
     """Sanity-check canonical suppliers against World Bank debarred entities in Bangladesh.
 
     Under SPEC.md Section 1, this cross-check is strictly descriptive. It matches
-    canonical names against public or local snapshot records of entities sanctioned
-    or debarred by the World Bank Group.
+    canonical names against public verified records of entities sanctioned or debarred
+    by the World Bank Group using strict normalized token-sort matching (threshold >= 92).
 
     Args:
         canonical_suppliers_df: DataFrame containing 'canonical_supplier_id' and 'canonical_name'.
         debarred_source: List of debarred dicts or Path to JSON snapshot.
-        threshold: RapidFuzz token sort similarity threshold for matching (default 85.0).
+        threshold: Strict RapidFuzz token sort similarity threshold (default 92.0).
+        anonymize: Whether to mask raw names and display anonymized canonical IDs with context.
+        sector_map: Optional mapping of canonical_supplier_id -> sector/procurement_category.
+        agency_map: Optional mapping of canonical_supplier_id -> primary implementing agency.
 
     Returns:
         DataFrame of matched entities with match confidence and debarment metadata.
@@ -282,6 +288,7 @@ def cross_check_debarred_firms(
     matches = []
     for d in debarred_list:
         raw_firm_name = str(d.get("firm_name", "")).strip()
+        ref_id = str(d.get("reference_id", d.get("citation", "WB_SANCTION_REF")))
         d_clean = clean_supplier_name(raw_firm_name)
         if not d_clean:
             continue
@@ -293,27 +300,25 @@ def cross_check_debarred_firms(
             if not s_clean:
                 continue
 
-            # Token sort ratio handles permutation of words
-            sort_score = fuzz.token_sort_ratio(d_clean, s_clean)
+            # Strict normalized token sort ratio only (fuzz.token_sort_ratio >= threshold)
+            sort_score = float(fuzz.token_sort_ratio(d_clean, s_clean))
 
-            # Token set ratio handles subsets (e.g. consortiums / JVs), require length check
-            set_score = fuzz.token_set_ratio(d_clean, s_clean)
-            is_valid_subset = (
-                set_score >= 95.0
-                and len(d_clean.split()) >= 2
-                and (d_clean in s_clean or s_clean in d_clean)
-            )
+            if sort_score >= threshold:
+                agency = (agency_map or {}).get(can_id, "Multiple")
+                sector = (sector_map or {}).get(can_id, "Commercial")
+                anon_label = f"{can_id} (Agency: {agency}, Sector: {sector})"
 
-            if sort_score >= threshold or is_valid_subset:
-                final_score = max(sort_score, set_score if is_valid_subset else sort_score)
                 matches.append({
                     "canonical_supplier_id": can_id,
-                    "canonical_name": can_name,
+                    "canonical_name": anon_label if anonymize else can_name,
+                    "anonymized_label": anon_label,
+                    "debarred_reference": ref_id if anonymize else raw_firm_name,
                     "debarred_firm_name": raw_firm_name,
-                    "match_score": round(float(final_score), 1),
+                    "match_score": round(sort_score, 1),
                     "country": d.get("country", "Bangladesh"),
-                    "grounds": d.get("grounds", "N/A"),
-                    "status": d.get("status", "Debarred"),
+                    "citation": d.get("citation", d.get("grounds", "Public Decision")),
+                    "grounds": d.get("grounds", d.get("citation", "Sanctions Board Record")),
+                    "status": d.get("status", "Published Record"),
                     "debarment_period": d.get("debarment_period", "N/A"),
                 })
 

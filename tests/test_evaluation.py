@@ -104,7 +104,14 @@ def test_cross_check_debarred_firms():
         {"firm_name": "UNRELATED DEFICIT FIRM", "grounds": "Fraud", "status": "Debarred"},
     ]
 
-    matches = cross_check_debarred_firms(suppliers_df, debarred_source=test_debarred_list, threshold=85.0)
+    matches = cross_check_debarred_firms(
+        suppliers_df,
+        debarred_source=test_debarred_list,
+        threshold=92.0,
+        anonymize=True,
+        sector_map={"CAN_SUP_001": "Goods", "CAN_SUP_002": "Services", "CAN_SUP_003": "Works"},
+        agency_map={"CAN_SUP_001": "MOHFW", "CAN_SUP_002": "DWASA", "CAN_SUP_003": "RHD"},
+    )
 
     matched_ids = set(matches["canonical_supplier_id"])
     assert "CAN_SUP_001" in matched_ids
@@ -112,6 +119,9 @@ def test_cross_check_debarred_firms():
     assert "CAN_SUP_003" in matched_ids
     assert "CAN_SUP_004" not in matched_ids
     assert len(matches) == 3
+    # Check anonymization
+    sample_row = matches[matches["canonical_supplier_id"] == "CAN_SUP_001"].iloc[0]
+    assert "CAN_SUP_001 (Agency: MOHFW, Sector: Goods)" in sample_row["canonical_name"]
 
 
 # ==============================================================================
