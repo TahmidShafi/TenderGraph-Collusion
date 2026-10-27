@@ -42,18 +42,18 @@ The BiCM rewires edges while strictly preserving each agency's contract count, e
 
 ### Top 10 High-Concentration Agency-Supplier Dyads
 
-| Agency | Canonical Supplier Firm | Contracts | Null Mean | Contract $z$-score | Empirical $p$-value | Total USD | Volume $z$-score |
+| Agency | Anonymized Canonical Supplier | Contracts | Null Mean | Contract $z$-score | Empirical $p$-value | Total USD | Volume $z$-score |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **MOWCA** | GLOBAL BRAND (`CAN_SUP_00001`) | 1 | 0.01 | **+11.91** | 0.0080 | $3,662.40 | +10.66 |
-| **DG_FOOD** | INTIMACY COMPUTER AND SOLUTIONS (`CAN_SUP_00221`) | 1 | 0.01 | **+9.48** | 0.0120 | $14,959.71 | +9.48 |
-| **DAE** | SMART TECHNOLOGIES BANGLADESH (`CAN_SUP_00005`) | 4 | 0.27 | **+7.68** | 0.0010 | $109,810.29 | +7.10 |
-| **IMED** | PARTEX FURNITURES INDUSTRIES (`CAN_SUP_00333`) | 1 | 0.02 | **+6.67** | 0.0230 | $15,803.63 | +9.09 |
-| **UGC** | BANGLADESH SCIENCE HOUSE DHAKA (`CAN_SUP_00007`) | 3 | 0.20 | **+6.62** | 0.0010 | $604,553.22 | +1.94 |
-| **UNKNOWN** | TAJEEM (`CAN_SUP_02032`) | 1 | 0.02 | **+6.38** | 0.0250 | $5,734.42 | +6.38 |
-| **DSHE** | CORE KNOWLEDGE (`CAN_SUP_00833`) | 1 | 0.02 | **+6.38** | 0.0250 | $630,257.03 | +6.38 |
-| **ELECTION_COMMISSION_SECRETARIAT** | COMPUTER SERVICES (`CAN_SUP_02821`) | 1 | 0.03 | **+6.12** | 0.0270 | $1,250,007.19 | +6.12 |
-| **UGC** | BANGLADESH INSTITUTE OF DEVELOPMENT STUDIES BIDS (`CAN_SUP_00052`) | 8 | 3.11 | **+6.07** | 0.0010 | $1,036,954.55 | +5.14 |
-| **DWASA** | SUNAM (`CAN_SUP_01971`) | 1 | 0.03 | **+5.79** | 0.0300 | $6,629.47 | +5.79 |
+| **MOWCA** | `CAN_SUP_00001` (Agency: MOWCA, Sector: Goods) | 1 | 0.01 | **+11.91** | 0.0080 | $3,662.40 | +10.66 |
+| **DG_FOOD** | `CAN_SUP_00221` (Agency: DG_FOOD, Sector: Goods) | 1 | 0.01 | **+9.48** | 0.0120 | $14,959.71 | +9.48 |
+| **DAE** | `CAN_SUP_00005` (Agency: DAE, Sector: Goods) | 4 | 0.27 | **+7.68** | 0.0010 | $109,810.29 | +7.10 |
+| **IMED** | `CAN_SUP_00333` (Agency: IMED, Sector: Goods) | 1 | 0.02 | **+6.67** | 0.0230 | $15,803.63 | +9.09 |
+| **UGC** | `CAN_SUP_00007` (Agency: UGC, Sector: Goods) | 3 | 0.20 | **+6.62** | 0.0010 | $604,553.22 | +1.94 |
+| **UNKNOWN** | `CAN_SUP_02032` (Agency: UNKNOWN, Sector: Goods) | 1 | 0.02 | **+6.38** | 0.0250 | $5,734.42 | +6.38 |
+| **DSHE** | `CAN_SUP_00833` (Agency: DSHE, Sector: Goods) | 1 | 0.02 | **+6.38** | 0.0250 | $630,257.03 | +6.38 |
+| **ELECTION_COMMISSION_SECRETARIAT** | `CAN_SUP_02821` (Agency: ELECTION_COMMISSION_SECRETARIAT, Sector: Goods) | 1 | 0.03 | **+6.12** | 0.0270 | $1,250,007.19 | +6.12 |
+| **UGC** | `CAN_SUP_00052` (Agency: UGC, Sector: Consultant Services) | 8 | 3.11 | **+6.07** | 0.0010 | $1,036,954.55 | +5.14 |
+| **DWASA** | `CAN_SUP_01971` (Agency: DWASA, Sector: Goods) | 1 | 0.03 | **+5.79** | 0.0300 | $6,629.47 | +5.79 |
 
 ---
 

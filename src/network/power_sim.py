@@ -402,13 +402,13 @@ def generate_week3_report(
         "",
         "### Top 10 High-Concentration Agency-Supplier Dyads",
         "",
-        "| Agency | Canonical Supplier Firm | Contracts | Null Mean | Contract $z$-score | Empirical $p$-value | Total USD | Volume $z$-score |",
+        "| Agency | Anonymized Canonical Supplier | Contracts | Null Mean | Contract $z$-score | Empirical $p$-value | Total USD | Volume $z$-score |",
         "| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |",
     ])
 
     for _, r in dyad_df.head(10).iterrows():
         report_lines.append(
-            f"| **{r['agency']}** | {r['canonical_name']} (`{r['canonical_supplier_id']}`) | {int(r['obs_contracts'])} | {r['null_mean_contracts']:.2f} | **+{r['z_contracts']:.2f}** | {r['p_contracts']:.4f} | ${r['obs_usd']:,.2f} | +{r['z_usd']:.2f} |"
+            f"| **{r['agency']}** | `{r['canonical_supplier_id']}` (Agency: {r['agency']}) | {int(r['obs_contracts'])} | {r['null_mean_contracts']:.2f} | **+{r['z_contracts']:.2f}** | {r['p_contracts']:.4f} | ${r['obs_usd']:,.2f} | +{r['z_usd']:.2f} |"
         )
 
     report_lines.extend([

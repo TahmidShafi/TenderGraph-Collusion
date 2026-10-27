@@ -312,14 +312,44 @@ def generate_week4_reports(
     baseline_res = grid_results[0.88]
     now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
 
-    # Load canonical suppliers for debarment audit
+    # Load canonical suppliers and agency/sector context for debarment audit
     con = get_connection(db_path=db_path, read_only=True)
     try:
         supp_df = con.execute("SELECT canonical_supplier_id, canonical_name FROM canonical_suppliers").df()
+        supp_meta_df = con.execute(
+            """
+            SELECT 
+                cs.canonical_supplier_id, 
+                mp.implementing_agency_canonical AS agency, 
+                rc.procurement_category 
+            FROM canonical_suppliers cs,
+                 UNNEST(cs.raw_supplier_ids) as t(raw_id)
+            JOIN raw_contracts rc ON t.raw_id = rc.supplier_id
+            LEFT JOIN mapped_projects mp ON rc.project_id = mp.project_id
+            """
+        ).df()
     finally:
         con.close()
 
-    debarred_matches = cross_check_debarred_firms(supp_df)
+    # Map each canonical supplier to modal sector and agency
+    supp_sector_map = (
+        supp_meta_df.groupby("canonical_supplier_id")["procurement_category"]
+        .agg(lambda s: s.mode().iloc[0] if not s.empty else "Commercial")
+        .to_dict()
+    )
+    supp_agency_map = (
+        supp_meta_df.groupby("canonical_supplier_id")["agency"]
+        .agg(lambda s: s.mode().iloc[0] if not s.empty else "Multiple")
+        .to_dict()
+    )
+
+    debarred_matches = cross_check_debarred_firms(
+        supp_df,
+        threshold=92.0,
+        anonymize=True,
+        sector_map=supp_sector_map,
+        agency_map=supp_agency_map,
+    )
 
     # 1. Build week4_sensitivity_matrix.md
     sens_lines = [
@@ -396,17 +426,17 @@ def generate_week4_reports(
         "",
         "## 2. World Bank Sanctioned/Debarred Entities Sanity Cross-Check",
         "",
-        "Under [SPEC.md](file:///d:/tendergraph-collusion/SPEC.md) Section 1, canonical Bangladeshi suppliers are cross-referenced against the public World Bank Listing of Ineligible Firms and Individuals strictly as a descriptive sanity check.",
+        "Under [SPEC.md](file:///d:/tendergraph-collusion/SPEC.md) Section 1, canonical Bangladeshi suppliers are cross-referenced against official public World Bank Sanctions Board published decisions strictly as a descriptive sanity check. Raw contractor identities are anonymized per research privacy guidelines.",
         "",
-        f"- **Total Distinct Debarred Entity Matches Identified:** **{len(debarred_matches)} matches**",
+        f"- **Total Distinct Debarred Entity Matches Identified:** **{len(debarred_matches)} matches** (Strict Token-Sort Score $\\ge 92\\%$)",
         "",
-        "| Canonical Supplier ID | Canonical Firm Name | Matched Debarred Entity | Match Score | Debarment Grounds | Status |",
+        "| Canonical Supplier ID | Anonymized Supplier Context | Debarment Reference Citation | Match Score | Grounds / Legal Record | Public Status |",
         "| :--- | :--- | :--- | :---: | :--- | :--- |",
     ]
 
-    for _, dm in debarred_matches.head(15).iterrows():
+    for _, dm in debarred_matches.iterrows():
         eval_lines.append(
-            f"| `{dm['canonical_supplier_id']}` | **{dm['canonical_name']}** | {dm['debarred_firm_name']} | {dm['match_score']:.1f}% | {dm['grounds']} | {dm['status']} |"
+            f"| `{dm['canonical_supplier_id']}` | **{dm['anonymized_label']}** | {dm['debarred_reference']} | {dm['match_score']:.1f}% | {dm['citation']} | {dm['status']} |"
         )
 
     eval_lines.extend([

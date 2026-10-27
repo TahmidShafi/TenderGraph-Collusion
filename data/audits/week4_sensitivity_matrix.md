@@ -1,6 +1,6 @@
 # Week 4 RapidFuzz Threshold Sensitivity Matrix
 
-**Generated:** 2026-10-27T16:41:30.606373+00:00  
+**Generated:** 2026-10-27T17:05:29.563288+00:00  
 **Baseline Cutoff:** $\tau_{\text{cut}} = 0.88$ (1,000 BiCM rewirings)  
 **Grid Points:** $\tau \in \{0.80, 0.85, 0.90, 0.95\}$ (200 fast BiCM rewirings)  
 
