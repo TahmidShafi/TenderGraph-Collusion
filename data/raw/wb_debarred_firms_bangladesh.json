@@ -1,0 +1,65 @@
+[
+  {
+    "firm_name": "TIGER IT BANGLADESH LTD",
+    "country": "Bangladesh",
+    "grounds": "Collusive, corrupt, and obstructive practices (Sanctions Board Decision No. 118)",
+    "debarment_period": "2019-2028",
+    "status": "Debarred"
+  },
+  {
+    "firm_name": "ZIAUR RAHMAN",
+    "country": "Bangladesh",
+    "grounds": "Collusive and corrupt practices in World Bank-financed operations",
+    "debarment_period": "2019-2028",
+    "status": "Debarred"
+  },
+  {
+    "firm_name": "SMEC INTERNATIONAL PTY LTD",
+    "country": "Bangladesh / Australia",
+    "grounds": "Corrupt and fraudulent practices across South Asia procurement",
+    "debarment_period": "2017-2020 (Historical / Remediation)",
+    "status": "Historical Debarment"
+  },
+  {
+    "firm_name": "MIR AKHTER HOSSAIN LTD",
+    "country": "Bangladesh",
+    "grounds": "Procurement integrity settlement / integrity compliance",
+    "debarment_period": "Historical Sanction / Conditional Non-Debarment",
+    "status": "Sanctioned Entity"
+  },
+  {
+    "firm_name": "CHINA FIRST METALLURGICAL CONSTRUCTION CORP",
+    "country": "China / Bangladesh",
+    "grounds": "Fraudulent practices in Dhaka Urban Transport Project",
+    "debarment_period": "Historical",
+    "status": "Debarred"
+  },
+  {
+    "firm_name": "SNC-LAVALIN INTERNATIONAL INC",
+    "country": "Canada / Bangladesh",
+    "grounds": "Corrupt practices in Padma Multipurpose Bridge Project",
+    "debarment_period": "2013-2023",
+    "status": "Historical Debarment"
+  },
+  {
+    "firm_name": "INSHA TRADE CORPORATION",
+    "country": "Bangladesh",
+    "grounds": "Fraudulent practices in World Bank-financed operations",
+    "debarment_period": "2026-2029",
+    "status": "Debarred"
+  },
+  {
+    "firm_name": "S.N. CORPORATION",
+    "country": "Bangladesh",
+    "grounds": "Fraudulent practices in civil works procurement",
+    "debarment_period": "Historical",
+    "status": "Debarred"
+  },
+  {
+    "firm_name": "TECHNO-CRAFT",
+    "country": "Bangladesh",
+    "grounds": "Fraudulent misrepresentation of technical qualifications",
+    "debarment_period": "Historical",
+    "status": "Debarred"
+  }
+]
